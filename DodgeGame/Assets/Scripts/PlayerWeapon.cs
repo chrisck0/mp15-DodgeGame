@@ -30,6 +30,11 @@ public class PlayerWeapon : MonoBehaviour
     private void Update() => UpdateCurrentCoolDown();
     // ------------------------------------------------
 
+    public void DecreaseCooldown(float cooldown)
+    {
+        _cooldown -= cooldown;
+    }
+
     private void UpdateCurrentCoolDown()
     {
         if (_isReadyFire) return;

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TurretController : MonoBehaviour
+public class TurretController : MonoBehaviour, IDamageable
 {
     [SerializeField] private float _rotateSpeed;
     [SerializeField] private float _cooldown;
@@ -21,6 +21,8 @@ public class TurretController : MonoBehaviour
     private bool _isPlayerInSight = false;
     private bool _isReadyToFire => _currentCooldown >= _cooldown;
     private SphereCollider _sphereCollider;
+
+    public GameObject GameObject { get; }
 
     private void Awake() => CacheComponents();
 
@@ -124,5 +126,10 @@ public class TurretController : MonoBehaviour
                 Debug.Log("플레이어 감지");
             }
         }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        Debug.Log($"{gameObject.name}이 데미지 {damage} 입음");
     }
 }

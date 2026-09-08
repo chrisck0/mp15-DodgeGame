@@ -15,6 +15,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake() => CacheComponents();
 
+    public void AddSpeed(float moveSpeed)
+    {
+        _moveSpeed += moveSpeed;
+    }
+
     public void Rotate()
     {
         Vector3 input = ReadRotateInput() * _mouseSensitivity;

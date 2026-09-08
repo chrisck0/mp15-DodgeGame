@@ -2,21 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IInteractor
+public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 {
     [SerializeField] private Transform _cameraPivot;
     [SerializeField] private float _detectionRange;
     [SerializeField] private KeyCode _interactionKey = KeyCode.E;
+    [SerializeField] private int _health;
 
+    private PlayerGrenade _grenade;
     private PlayerWeapon _weapon;
     private PlayerMovement _movement;
     private Transform _cameraTransform;
-
+    private SteamPack _steamPack;
+    private float _elapsedBuffTime;
     private IInteractable _targetInteractable;
 
     private bool _hasDetectInteractable => _targetInteractable != null;
     private bool _isPressedInteractionKey => Input.GetKeyDown(_interactionKey);
     private bool _canInteraction => _hasDetectInteractable && _isPressedInteractionKey;
+    private bool _hasSteamPack => _steamPack != null;
 
     public GameObject GameObject { get => gameObject; }
     
@@ -33,6 +37,7 @@ public class PlayerController : MonoBehaviour, IInteractor
         _weapon.Fire();
         DetectInteractable();
         TryInteract();
+        ChangeStat();
     }
 
     private void LateUpdate()
@@ -45,6 +50,7 @@ public class PlayerController : MonoBehaviour, IInteractor
     {
         _movement = GetComponent<PlayerMovement>();
         _weapon = GetComponentInChildren<PlayerWeapon>();
+        _grenade = GetComponentInChildren<PlayerGrenade>();
         _cameraTransform = Camera.main.transform;
     }
 
@@ -106,5 +112,38 @@ public class PlayerController : MonoBehaviour, IInteractor
 
         _targetInteractable.Interact(this);
         _targetInteractable = null;
+    }
+
+    public void SetSteamPack()
+    {
+        _steamPack = gameObject.AddComponent<SteamPack>();
+        DecreaseHealth(_steamPack.GetHealthDecrease());
+        _movement.AddSpeed(_steamPack.GetMoveSpeedIncrease());
+        _weapon.DecreaseCooldown(_steamPack.GetCooldownDecrease());
+    }
+
+    private void ChangeStat()
+    {
+        if (!_hasSteamPack) return;
+
+        _elapsedBuffTime += Time.deltaTime;
+
+        if (_elapsedBuffTime > _steamPack.GetBuffTime())
+        {
+            _movement.AddSpeed(-_steamPack.GetMoveSpeedIncrease());
+            _weapon.DecreaseCooldown(-_steamPack.GetCooldownDecrease());
+            Destroy(_steamPack);
+            _steamPack = null;
+        }
+    }
+
+    private void DecreaseHealth(int damage)
+    {
+        _health -= damage;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        Debug.Log($"{gameObject.name}이 데미지 {damage} 입음");
     }
 }

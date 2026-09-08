@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class ItemBox : MonoBehaviour, IInteractable
+public class ItemBox : MonoBehaviour, IInteractable, IDamageable
 {
     public GameObject GameObject { get => gameObject; }
     private Outline _outline;
@@ -22,15 +23,19 @@ public class ItemBox : MonoBehaviour, IInteractable
 
     public void Interact(IInteractor owner)
     {
+        if (!(owner is PlayerController)) return;
+
+        PlayerController player = (PlayerController)owner;
+
+        Debug.Log("ItemBox : Player Interacted!");
+    
+        player.SetSteamPack();
+
         // owner의 능력치 상승
         // 인벤토리로 들어감
         // 무기가 생김
         // 장탄수 리필
         // ...
-
-        // if (!(owner is PlayerController)) return;
-
-        // PlayerController player = (PlayerController)owner;
 
         // 이동속도 변화 ()
         // 버프 같은 걸 객체로 만들 수 있다
@@ -45,5 +50,10 @@ public class ItemBox : MonoBehaviour, IInteractable
     private void CacheComponents()
     {
         _outline = gameObject.GetComponent<Outline>();
+    }
+
+    public void TakeDamage(int damage)
+    {
+        Debug.Log($"{gameObject.name}이 데미지 {damage} 입음");
     }
 }
