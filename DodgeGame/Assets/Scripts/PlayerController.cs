@@ -139,11 +139,14 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 
     private void DecreaseHealth(int damage)
     {
+        if (_health <= 0) return;
         _health -= damage;
     }
 
     public void TakeDamage(int damage)
     {
-        Debug.Log($"{gameObject.name}이 데미지 {damage} 입음");
+        if (_health <= 0) return;
+        _health -= damage;
+        Debug.Log($"{gameObject.name}가 데미지 {damage} 입음");
     }
 }
