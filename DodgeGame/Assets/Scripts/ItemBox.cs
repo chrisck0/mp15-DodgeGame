@@ -29,7 +29,7 @@ public class ItemBox : MonoBehaviour, IInteractable, IDamageable
 
         Debug.Log("ItemBox : Player Interacted!");
     
-        player.SetSteamPack();
+        player.SetStimPack();
 
         // owner의 능력치 상승
         // 인벤토리로 들어감

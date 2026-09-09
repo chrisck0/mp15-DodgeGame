@@ -9,13 +9,15 @@ public class PlayerWeapon : MonoBehaviour
 
     [SerializeField] private KeyCode _fireKey = KeyCode.Mouse0;
     [SerializeField] private KeyCode _reloadKey = KeyCode.R;
-    [SerializeField] private float _range;
-    [SerializeField] private int _damage;
-    [SerializeField] private float _cooldown;
     [SerializeField] private int _maxMagazine;
     [SerializeField] private FlameEffect _flameEffect;
     [SerializeField] private FlameEffect _bulletImpactEffectPrefab;
+    [SerializeField] private LayerMask _targetLayerMask;
 
+    private PlayerStat _stat;
+    private float _range => _stat.WeaponRange;
+    private int _damage => _stat.Damage;
+    private float _cooldown => _stat.WeaponCooldown;
     private float _currentCooldown;
     private int _currentMagazine;
     private bool _isPressedFire => Input.GetKey(_fireKey);
@@ -32,7 +34,7 @@ public class PlayerWeapon : MonoBehaviour
 
     public void DecreaseCooldown(float cooldown)
     {
-        _cooldown -= cooldown;
+        _stat.WeaponCooldown -= cooldown;
     }
 
     private void UpdateCurrentCoolDown()
@@ -82,7 +84,7 @@ public class PlayerWeapon : MonoBehaviour
         Ray ray = new Ray(_cameraTransform.position, _cameraTransform.forward);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, _range))
+        if (Physics.Raycast(ray, out hit, _range, _targetLayerMask))
         {
             PlayBulletImpactEffect(hit);
             result = hit.transform.TryGetComponent<IDamageable>(out damageable);
@@ -94,6 +96,7 @@ public class PlayerWeapon : MonoBehaviour
     private void CacheComponents()
     {
         _cameraTransform = Camera.main.transform;
+        _stat = GetComponentInParent<PlayerStat>();
     }
 
     private void Init()

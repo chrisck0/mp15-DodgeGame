@@ -14,6 +14,7 @@ public class TurretController : MonoBehaviour, IDamageable
     [SerializeField] private int _bulletDamage;
     [SerializeField] private float _bulletSpeed;
     [SerializeField] private float _bulletDestroyDelay;
+    [SerializeField] private LayerMask _playerLayerMask;
 
     private float _currentCooldown;
     private Transform _playerTransform;
@@ -28,7 +29,7 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (_playerLayerMask.Contains(other))
         {
             _playerTransform = other.transform;
         }
@@ -36,7 +37,7 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (_playerLayerMask.Contains(other))
         {
             _playerTransform = null;
         }
@@ -52,7 +53,7 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void CacheComponents()
     {
-        _sphereCollider = GetComponent<SphereCollider>();
+        _sphereCollider = GetComponentInChildren<SphereCollider>();
     }
 
     private void Fire()
@@ -118,13 +119,9 @@ public class TurretController : MonoBehaviour, IDamageable
         Ray ray = new Ray(from, (to - from).normalized);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, _sphereCollider.radius))
+        if (Physics.Raycast(ray, out hit, _sphereCollider.radius, _playerLayerMask))
         {
-            if (hit.transform.CompareTag("Player"))
-            {
-                _isPlayerInSight = true;
-                Debug.Log("플레이어 감지");
-            }
+            _isPlayerInSight = true;
         }
     }
 

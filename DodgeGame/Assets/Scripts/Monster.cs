@@ -6,7 +6,7 @@ public class Monster : MonoBehaviour, IDamageable
 {
     [SerializeField] private int _attackDamage;
     [SerializeField] private float _cooldown;
-
+    [SerializeField] private LayerMask _playerLayerMask;
     private SphereCollider _sphereCollider;
     private Transform _playerTransform;
     private float _currentCooldown;
@@ -19,14 +19,14 @@ public class Monster : MonoBehaviour, IDamageable
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) {
+        if (_playerLayerMask.Contains(other)) {
             _playerTransform = other.transform;
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player")) {
+        if (_playerLayerMask.Contains(other)) {
             _playerTransform = null;
         }
     }
@@ -40,7 +40,7 @@ public class Monster : MonoBehaviour, IDamageable
 
     private void CacheComponents()
     {
-        _sphereCollider = GetComponent<SphereCollider>();
+        _sphereCollider = GetComponentInChildren<SphereCollider>();
     }
 
     private void UpdateCurrentCooldown()
@@ -65,12 +65,9 @@ public class Monster : MonoBehaviour, IDamageable
         Ray ray = new Ray(transform.position, (to - from).normalized);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, _sphereCollider.radius))
+        if (Physics.Raycast(ray, out hit, _sphereCollider.radius, _playerLayerMask))
         {
-            if (hit.transform.CompareTag("Player"))
-            {
-                _isPlayerInSight = true;
-            }
+            _isPlayerInSight = true;
         }
     }
 

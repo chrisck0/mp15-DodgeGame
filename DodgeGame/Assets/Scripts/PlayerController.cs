@@ -7,20 +7,21 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     [SerializeField] private Transform _cameraPivot;
     [SerializeField] private float _detectionRange;
     [SerializeField] private KeyCode _interactionKey = KeyCode.E;
-    [SerializeField] private int _health;
+    [SerializeField] private LayerMask _interactableLayerMask;
 
     private PlayerGrenade _grenade;
     private PlayerWeapon _weapon;
     private PlayerMovement _movement;
+    private PlayerStat _stat;
     private Transform _cameraTransform;
-    private SteamPack _steamPack;
+    private StimPack _stimPack;
     private float _elapsedBuffTime;
     private IInteractable _targetInteractable;
 
     private bool _hasDetectInteractable => _targetInteractable != null;
     private bool _isPressedInteractionKey => Input.GetKeyDown(_interactionKey);
     private bool _canInteraction => _hasDetectInteractable && _isPressedInteractionKey;
-    private bool _hasSteamPack => _steamPack != null;
+    private bool _hasStimPack => _stimPack != null;
 
     public GameObject GameObject { get => gameObject; }
     
@@ -51,6 +52,7 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _movement = GetComponent<PlayerMovement>();
         _weapon = GetComponentInChildren<PlayerWeapon>();
         _grenade = GetComponentInChildren<PlayerGrenade>();
+        _stat = GetComponent<PlayerStat>();
         _cameraTransform = Camera.main.transform;
     }
 
@@ -81,7 +83,7 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         Ray ray = new Ray(_cameraTransform.position, _cameraTransform.forward);
         RaycastHit hit;
 
-        if (!Physics.Raycast(ray, out hit, _detectionRange))
+        if (!Physics.Raycast(ray, out hit, _detectionRange, _interactableLayerMask))
         {
             if (_hasDetectInteractable)
             {
@@ -114,39 +116,39 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _targetInteractable = null;
     }
 
-    public void SetSteamPack()
+    public void SetStimPack()
     {
-        _steamPack = gameObject.AddComponent<SteamPack>();
-        DecreaseHealth(_steamPack.GetHealthDecrease());
-        _movement.AddSpeed(_steamPack.GetMoveSpeedIncrease());
-        _weapon.DecreaseCooldown(_steamPack.GetCooldownDecrease());
+        _stimPack = gameObject.AddComponent<StimPack>();
+        TakeDamage(_stimPack.GetHealthDecrease());
+        _movement.AddSpeed(_stimPack.GetMoveSpeedIncrease());
+        _weapon.DecreaseCooldown(_stimPack.GetCooldownDecrease());
     }
 
     private void ChangeStat()
     {
-        if (!_hasSteamPack) return;
+        if (!_hasStimPack) return;
 
         _elapsedBuffTime += Time.deltaTime;
 
-        if (_elapsedBuffTime > _steamPack.GetBuffTime())
+        if (_elapsedBuffTime > _stimPack.GetBuffTime())
         {
-            _movement.AddSpeed(-_steamPack.GetMoveSpeedIncrease());
-            _weapon.DecreaseCooldown(-_steamPack.GetCooldownDecrease());
-            Destroy(_steamPack);
-            _steamPack = null;
+            _movement.AddSpeed(-_stimPack.GetMoveSpeedIncrease());
+            _weapon.DecreaseCooldown(-_stimPack.GetCooldownDecrease());
+            Destroy(_stimPack);
+            _stimPack = null;
         }
-    }
-
-    private void DecreaseHealth(int damage)
-    {
-        if (_health <= 0) return;
-        _health -= damage;
     }
 
     public void TakeDamage(int damage)
     {
-        if (_health <= 0) return;
-        _health -= damage;
-        Debug.Log($"{gameObject.name}가 데미지 {damage} 입음");
+        _stat.Health -= damage;
+        if (_stat.Health > 0)
+        {
+            Debug.Log($"{gameObject.name}가 데미지 {damage} 입음");
+        }
+        else
+        {
+            Debug.Log($"{gameObject.name} 사망");
+        }
     }
 }

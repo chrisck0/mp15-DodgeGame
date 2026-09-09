@@ -4,18 +4,21 @@ using UnityEngine;
 
 public class BulletController : MonoBehaviour
 {
+    [SerializeField] private LayerMask _playerLayerMask;
     private int _damage;
     private float _speed;
 
     // 어딘가에 부딪히면
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (_playerLayerMask.Contains(other))
         {
-            // TODO: 데미지 추가...
-            Debug.Log("플레이어 맞음");
+            if (other.gameObject.TryGetComponent<PlayerController>(out PlayerController playerController))
+            {
+                playerController.TakeDamage(_damage);
+            }
         }
-
+        Debug.Log($"Collider is : {other.name}, Destroy bullet!");
         Destroy(gameObject);
     }
 

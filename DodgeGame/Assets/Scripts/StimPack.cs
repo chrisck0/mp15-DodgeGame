@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SteamPack : MonoBehaviour
+public class StimPack : MonoBehaviour
 {
     [SerializeField] private float _moveSpeedIncrease = 5f;
     [SerializeField] private float _cooldownDecrease = 0.05f;
