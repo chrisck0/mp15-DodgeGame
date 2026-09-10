@@ -2510,14 +2510,14 @@ MonoBehaviour:
   _maxKillLogTime: 3
   _killLog: {fileID: 0}
   _gameOverUI: {fileID: 920965129}
-  _settingsUI: {fileID: 0}
+  _settingsUI: {fileID: 1546487893}
   _killLogText: {fileID: 2110264817}
   _gameOverText: {fileID: 2079947961}
   _timerText: {fileID: 696679250}
-  _volumeText: {fileID: 0}
+  _volumeText: {fileID: 913048786}
   _mainMenuButton: {fileID: 2123332400}
   _settingsKeyCode: 27
-  _volumeSlider: {fileID: 0}
+  _volumeSlider: {fileID: 2104030804}
 --- !u!4 &1696183727
 Transform:
   m_ObjectHideFlags: 0
