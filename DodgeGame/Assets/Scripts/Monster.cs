@@ -4,11 +4,15 @@ using UnityEngine;
 
 public class Monster : MonoBehaviour, IDamageable
 {
+    [SerializeField] private GameManager _gameManager;
     [SerializeField] private int _attackDamage;
     [SerializeField] private float _cooldown;
     [SerializeField] private LayerMask _playerLayerMask;
-    private SphereCollider _sphereCollider;
-    private Transform _playerTransform;
+    [field: SerializeField] public int MaxHealth { get; private set; }
+    [field: SerializeField] public int Health { get; private set; }
+
+    private DetectionTrigger _detectionTrigger;
+    private Transform _playerTransform => _detectionTrigger.TargetTransform;
     private float _currentCooldown;
     private bool _isPlayerInTrigger => _playerTransform != null;
     private bool _isPlayerInSight;
@@ -16,20 +20,7 @@ public class Monster : MonoBehaviour, IDamageable
     public GameObject GameObject { get => gameObject; }
 
     private void Awake() => CacheComponents();
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (_playerLayerMask.Contains(other)) {
-            _playerTransform = other.transform;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (_playerLayerMask.Contains(other)) {
-            _playerTransform = null;
-        }
-    }
+    private void Start() => Init();
 
     private void Update()
     {
@@ -40,7 +31,7 @@ public class Monster : MonoBehaviour, IDamageable
 
     private void CacheComponents()
     {
-        _sphereCollider = GetComponentInChildren<SphereCollider>();
+        _detectionTrigger = GetComponentInChildren<DetectionTrigger>();
     }
 
     private void UpdateCurrentCooldown()
@@ -65,7 +56,7 @@ public class Monster : MonoBehaviour, IDamageable
         Ray ray = new Ray(transform.position, (to - from).normalized);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, _sphereCollider.radius, _playerLayerMask))
+        if (Physics.Raycast(ray, out hit, _detectionTrigger.Range, _playerLayerMask))
         {
             _isPlayerInSight = true;
         }
@@ -75,17 +66,53 @@ public class Monster : MonoBehaviour, IDamageable
     {
         if (!_isPlayerInSight || !_isPlayerInTrigger || !_isReadyToAttack) return;
 
-        Debug.Log($"{gameObject.name}가 플레이어 공격");
-
         IDamageable damageable = _playerTransform.GetComponent<IDamageable>();
-        damageable?.TakeDamage(_attackDamage);
+        damageable?.TakeDamage(_attackDamage, this);
 
         _currentCooldown = 0;
     }
 
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, IDamageable attacker)
     {
-        Debug.Log($"{gameObject.name}가 데미지 {damage} 입음");
+        Health -= damage;
+
+        if (Health < 0)
+        {
+            Die();
+            NotifyDeath(attacker);
+        }
+    }
+
+    private void Die()
+    {
+        DisconnectGameManager();
+        Destroy(gameObject);
+    }
+
+    public void Knockback(Vector3 direction)
+    {
+        GameObject.GetComponent<Rigidbody>()?.AddForce(direction, ForceMode.Impulse);
+    }
+
+    private void Init()
+    {
+        Health = MaxHealth;
+        ConnectGameManager();
+    }
+
+    public void ConnectGameManager()
+    {
+        _gameManager.AddDamageable(this);
+    }
+
+    public void DisconnectGameManager()
+    {
+        _gameManager.RemoveDamageable(this);
+    }
+
+    private void NotifyDeath(IDamageable attacker)
+    {
+        _gameManager.NotifyDeath(attacker, this);
     }
 }

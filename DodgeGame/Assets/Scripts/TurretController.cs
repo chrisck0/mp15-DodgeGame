@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class TurretController : MonoBehaviour, IDamageable
 {
+    [field: SerializeField] public int MaxHealth { get; private set; }
+    [field: SerializeField] public int Health { get; private set; }
+
+    [SerializeField] private GameManager _gameManager;
+    [SerializeField] private LayerMask _playerLayerMask;
     [SerializeField] private float _rotateSpeed;
     [SerializeField] private float _cooldown;
     [SerializeField] private Transform _headTransform;
@@ -14,34 +19,17 @@ public class TurretController : MonoBehaviour, IDamageable
     [SerializeField] private int _bulletDamage;
     [SerializeField] private float _bulletSpeed;
     [SerializeField] private float _bulletDestroyDelay;
-    [SerializeField] private LayerMask _playerLayerMask;
 
     private float _currentCooldown;
-    private Transform _playerTransform;
+    private Transform _playerTransform => _detectionTrigger.TargetTransform;
     private bool _isPlayerInTrigger => _playerTransform != null;
     private bool _isPlayerInSight = false;
     private bool _isReadyToFire => _currentCooldown >= _cooldown;
-    private SphereCollider _sphereCollider;
-
-    public GameObject GameObject { get; }
+    private DetectionTrigger _detectionTrigger;
+    public GameObject GameObject { get => gameObject; }
 
     private void Awake() => CacheComponents();
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (_playerLayerMask.Contains(other))
-        {
-            _playerTransform = other.transform;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (_playerLayerMask.Contains(other))
-        {
-            _playerTransform = null;
-        }
-    }
+    private void Start() => Init();
 
     private void Update()
     {
@@ -53,7 +41,7 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void CacheComponents()
     {
-        _sphereCollider = GetComponentInChildren<SphereCollider>();
+        _detectionTrigger = GetComponentInChildren<DetectionTrigger>();
     }
 
     private void Fire()
@@ -90,7 +78,7 @@ public class TurretController : MonoBehaviour, IDamageable
             _muzzlePoint.rotation
             );
 
-        bullet.SetData(_bulletDamage, _bulletSpeed, _bulletDestroyDelay);
+        bullet.SetData(_bulletDamage, _bulletSpeed, _bulletDestroyDelay, this);
     }
 
     private void Rotate()
@@ -119,14 +107,52 @@ public class TurretController : MonoBehaviour, IDamageable
         Ray ray = new Ray(from, (to - from).normalized);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, _sphereCollider.radius, _playerLayerMask))
+        if (Physics.Raycast(ray, out hit, _detectionTrigger.Range, _playerLayerMask))
         {
             _isPlayerInSight = true;
         }
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, IDamageable attacker)
     {
-        Debug.Log($"{gameObject.name}이 데미지 {damage} 입음");
+        Health -= damage;
+
+        if (Health < 0)
+        {
+            Die();
+            NotifyDeath(attacker);
+        }
+    }
+
+    private void Die()
+    {
+        DisconnectGameManager();
+        Destroy(gameObject);
+    }
+
+    public void Knockback(Vector3 direction)
+    {
+
+    }
+
+    private void Init()
+    {
+        Health = MaxHealth;
+        ConnectGameManager();
+    }
+
+    public void ConnectGameManager()
+    {
+        _gameManager.AddDamageable(this);
+    }
+
+    public void DisconnectGameManager()
+    {
+        _gameManager.RemoveDamageable(this);
+    }
+
+    private void NotifyDeath(IDamageable attacker)
+    {
+        _gameManager.NotifyDeath(attacker, this);
     }
 }

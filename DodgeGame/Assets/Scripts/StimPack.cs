@@ -4,28 +4,73 @@ using UnityEngine;
 
 public class StimPack : MonoBehaviour
 {
-    [SerializeField] private float _moveSpeedIncrease = 5f;
-    [SerializeField] private float _cooldownDecrease = 0.05f;
-    [SerializeField] private int _healthDecrease = 10;
-    [SerializeField] private float _buffTime = 20f;
+    private float _moveSpeed;
+    private float _cooldown;
+    private int _damage;
 
-    public float GetMoveSpeedIncrease()
+    private float _originalMoveSpeed;
+    private float _originalCooldown;
+     
+    private float _buffTime = 20f;
+    private float _elapsedTime;
+    private bool _isBuffFinished => _elapsedTime >= _buffTime;
+    private PlayerController _playerController;
+
+    private void Awake()
     {
-        return _moveSpeedIncrease;
+        _elapsedTime = 0f;
     }
 
-    public float GetCooldownDecrease()
+    private void Update()
     {
-        return _cooldownDecrease;
+        UpdateElapsedTime();
+        Deactivate();
+    }
+    public StimPack SetMoveSpeed(float moveSpeed)
+    {
+        _moveSpeed = moveSpeed;
+        return this;
     }
 
-    public int GetHealthDecrease()
+    public StimPack SetCooldown(float cooldown)
     {
-        return _healthDecrease;
+        _cooldown = cooldown;
+        return this;
     }
 
-    public float GetBuffTime()
+    public StimPack SetDamage(int damage)
     {
-        return _buffTime;
+        _damage = damage;
+        return this;
+    }
+
+    public StimPack SetPlayerController(PlayerController playerController)
+    {
+        _playerController = playerController;
+        return this;
+    }
+
+    public void Activate()
+    {
+        _originalMoveSpeed = _playerController.Stat.MoveSpeed;
+        _originalCooldown = _playerController.Stat.WeaponCooldown;
+
+        _playerController.Stat.MoveSpeed = _moveSpeed;
+        _playerController.Stat.WeaponCooldown = _cooldown;
+        _playerController.Stat.Health -= _damage;
+    }
+
+    private void Deactivate()
+    {
+        if (!_isBuffFinished) return;
+
+        _playerController.Stat.MoveSpeed = _originalMoveSpeed;
+        _playerController.Stat.WeaponCooldown = _originalCooldown;
+        Destroy(gameObject);
+    }
+
+    private void UpdateElapsedTime()
+    {
+        _elapsedTime += Time.deltaTime;
     }
 }

@@ -4,15 +4,20 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 {
+    [SerializeField] private GameManager _gameManager;
     [SerializeField] private Transform _cameraPivot;
     [SerializeField] private float _detectionRange;
     [SerializeField] private KeyCode _interactionKey = KeyCode.E;
     [SerializeField] private LayerMask _interactableLayerMask;
+    [SerializeField] private float _knockbackGain;
 
+    public int MaxHealth { get => _stat.Health; }
+    public int Health { get => _stat.Health; }
     private PlayerGrenade _grenade;
     private PlayerWeapon _weapon;
     private PlayerMovement _movement;
     private PlayerStat _stat;
+    public PlayerStat Stat => _stat;
     private Transform _cameraTransform;
     private StimPack _stimPack;
     private float _elapsedBuffTime;
@@ -27,7 +32,7 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     
     // ----------------------------------------------
     private void Awake() => CacheComponents();
-    private void Start() => LockCursor();
+    private void Start() => Init();
     private void FixedUpdate() => _movement.Move();
     // ----------------------------------------------
 
@@ -56,10 +61,16 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _cameraTransform = Camera.main.transform;
     }
 
-    private void LockCursor()
+    public void LockCursor()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    public void UnlockCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void SetWeaponTransform()
@@ -119,9 +130,9 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     public void SetStimPack()
     {
         _stimPack = gameObject.AddComponent<StimPack>();
-        TakeDamage(_stimPack.GetHealthDecrease());
-        _movement.AddSpeed(_stimPack.GetMoveSpeedIncrease());
-        _weapon.DecreaseCooldown(_stimPack.GetCooldownDecrease());
+        //TakeDamage(_stimPack.GetHealthDecrease());
+        //_movement.AddSpeed(_stimPack.GetMoveSpeedIncrease());
+        //_weapon.DecreaseCooldown(_stimPack.GetCooldownDecrease());
     }
 
     private void ChangeStat()
@@ -129,26 +140,55 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         if (!_hasStimPack) return;
 
         _elapsedBuffTime += Time.deltaTime;
-
+/*
         if (_elapsedBuffTime > _stimPack.GetBuffTime())
         {
             _movement.AddSpeed(-_stimPack.GetMoveSpeedIncrease());
             _weapon.DecreaseCooldown(-_stimPack.GetCooldownDecrease());
             Destroy(_stimPack);
             _stimPack = null;
+        }*/
+    }
+
+    public void TakeDamage(int damage, IDamageable attacker)
+    {
+        _stat.Health -= damage;
+
+        if (_stat.Health <= 0)
+        {
+            DisconnectGameManager();
+            NotifyDeath(attacker);
         }
     }
 
-    public void TakeDamage(int damage)
+    public void Knockback(Vector3 direction)
     {
-        _stat.Health -= damage;
-        if (_stat.Health > 0)
-        {
-            Debug.Log($"{gameObject.name}가 데미지 {damage} 입음");
-        }
-        else
-        {
-            Debug.Log($"{gameObject.name} 사망");
-        }
+        Vector3 force = new Vector3(
+            direction.x * _knockbackGain,
+            direction.y,
+            direction.z * _knockbackGain
+            );
+        GameObject.GetComponent<Rigidbody>()?.AddForce(force, ForceMode.Impulse);
+    }
+
+    public void ConnectGameManager()
+    {
+        _gameManager.AddDamageable(this);
+    }
+
+    public void DisconnectGameManager()
+    {
+        _gameManager.RemoveDamageable(this);
+    }
+
+    private void Init()
+    {
+        LockCursor();
+        ConnectGameManager();
+    }
+
+    private void NotifyDeath(IDamageable attacker)
+    {
+        _gameManager.NotifyDeath(attacker, this);
     }
 }

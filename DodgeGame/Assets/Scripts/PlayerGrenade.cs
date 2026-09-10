@@ -12,6 +12,10 @@ public class PlayerGrenade : MonoBehaviour
     [SerializeField] private Transform playerTransform;
     [SerializeField] private int _maxGrenadeNumber;
 
+    public int MaxGrenadeNumber => _maxGrenadeNumber;
+    public int CurrentGrenadeNumber => _currentGrenadeNumber;
+
+    private PlayerController _controller;
     private float _chargePower;
     private int _currentGrenadeNumber;
 
@@ -19,8 +23,15 @@ public class PlayerGrenade : MonoBehaviour
     private bool _hasChargePower => _chargePower != 0;
     private bool _hasMaxChargePower => _chargePower >= _maxChargePower;
 
+    private void Awake() => CacheComponents();
     private void Start() => Init();
     private void Update() => ChargePower();
+
+    private void CacheComponents()
+    {
+        _controller = GetComponentInParent<PlayerController>();
+    }
+
     private void Init()
     {
         ResetChargePower();
@@ -54,6 +65,7 @@ public class PlayerGrenade : MonoBehaviour
         if (_currentGrenadeNumber <= 0) return;
 
         Grenade grenade = Instantiate(_grenadePrefab, transform.position, transform.rotation);
+        grenade.SetOwner(_controller);
         Rigidbody grenadeRigidbody = grenade.GetComponent<Rigidbody>();
 
         grenadeRigidbody.AddForce(

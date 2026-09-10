@@ -5,6 +5,7 @@ using UnityEngine;
 public class BulletController : MonoBehaviour
 {
     [SerializeField] private LayerMask _playerLayerMask;
+    private TurretController _owner;
     private int _damage;
     private float _speed;
 
@@ -15,10 +16,10 @@ public class BulletController : MonoBehaviour
         {
             if (other.gameObject.TryGetComponent<PlayerController>(out PlayerController playerController))
             {
-                playerController.TakeDamage(_damage);
+                playerController.TakeDamage(_damage, _owner);
             }
         }
-        Debug.Log($"Collider is : {other.name}, Destroy bullet!");
+
         Destroy(gameObject);
     }
 
@@ -31,10 +32,11 @@ public class BulletController : MonoBehaviour
     }
 
     // 터렛으로부터 데이터 전달 받기
-    public void SetData(int damage, float speed, float destroyDelay)
+    public void SetData(int damage, float speed, float destroyDelay, TurretController owner)
     {
         _damage = damage;
         _speed = speed;
+        _owner = owner;
 
         Destroy(gameObject, destroyDelay);
     }

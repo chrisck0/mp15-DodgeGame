@@ -14,12 +14,17 @@ public class PlayerWeapon : MonoBehaviour
     [SerializeField] private FlameEffect _bulletImpactEffectPrefab;
     [SerializeField] private LayerMask _targetLayerMask;
 
+    private PlayerController _controller;
     private PlayerStat _stat;
     private float _range => _stat.WeaponRange;
     private int _damage => _stat.Damage;
     private float _cooldown => _stat.WeaponCooldown;
     private float _currentCooldown;
     private int _currentMagazine;
+
+    public int CurrentMagazine => _currentMagazine;
+    public int MaxMagazine => _maxMagazine;
+
     private bool _isPressedFire => Input.GetKey(_fireKey);
     private bool _isPressedReload => Input.GetKeyDown(_reloadKey);
     private bool _isReadyFire => _currentCooldown >= _cooldown;
@@ -73,7 +78,7 @@ public class PlayerWeapon : MonoBehaviour
 
         if (!TryGetDamageable(out IDamageable damageable)) return;
 
-        damageable.TakeDamage(_damage);
+        damageable.TakeDamage(_damage, _controller);
     }
 
     private bool TryGetDamageable(out IDamageable damageable)
@@ -97,6 +102,7 @@ public class PlayerWeapon : MonoBehaviour
     {
         _cameraTransform = Camera.main.transform;
         _stat = GetComponentInParent<PlayerStat>();
+        _controller = GetComponentInParent<PlayerController>();
     }
 
     private void Init()

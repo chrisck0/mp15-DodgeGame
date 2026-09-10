@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerStat : MonoBehaviour
 {
     [SerializeField] private int _health;
+    [SerializeField] private int MaxHealth;
     [field: SerializeField] public float MoveSpeed { get; set; }
     [field: SerializeField] public float WeaponRange { get; set; }
     [field: SerializeField] public float WeaponCooldown { get; set; }
