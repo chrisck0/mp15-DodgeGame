@@ -61,18 +61,6 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _cameraTransform = Camera.main.transform;
     }
 
-    public void LockCursor()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
-    public void UnlockCursor()
-    {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-    }
-
     private void SetWeaponTransform()
     {
         _weapon.transform.SetPositionAndRotation(
@@ -183,7 +171,6 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 
     private void Init()
     {
-        LockCursor();
         ConnectGameManager();
     }
 
