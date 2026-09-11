@@ -27,13 +27,11 @@ public class ItemBox : MonoBehaviour, IInteractable
 
         PlayerController player = (PlayerController)owner;
 
-        Debug.Log("ItemBox : Player Interacted!");
-
         Instantiate(_stimPackPrefab, player.transform)
             .SetPlayerController(player)
             .SetMoveSpeed(10f)
             .SetCooldown(0.1f)
-            .SetDamage(10)
+            .SetDamage(20)
             .Activate();
 
         Destroy(gameObject);

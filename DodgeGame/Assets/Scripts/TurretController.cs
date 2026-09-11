@@ -6,7 +6,8 @@ public class TurretController : MonoBehaviour, IDamageable
 {
     [field: SerializeField] public int MaxHealth { get; private set; }
     [field: SerializeField] public int Health { get; private set; }
-
+    
+    [SerializeField] private ObjectPool _bulletPool;
     [SerializeField] private GameManager _gameManager;
     [SerializeField] private LayerMask _playerLayerMask;
     [SerializeField] private float _rotateSpeed;
@@ -18,7 +19,7 @@ public class TurretController : MonoBehaviour, IDamageable
     [SerializeField] private BulletController _bulletPrefab;
     [SerializeField] private int _bulletDamage;
     [SerializeField] private float _bulletSpeed;
-    [SerializeField] private float _bulletDestroyDelay;
+    [SerializeField] private float _returnDelay;
 
     private float _currentCooldown;
     private Transform _playerTransform => _detectionTrigger.TargetTransform;
@@ -72,13 +73,20 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void SpawnBullet()
     {
-        BulletController bullet = Instantiate(
-            _bulletPrefab,
-            _muzzlePoint.position,
-            _muzzlePoint.rotation
-            );
+        // 1. 얻어오기
+        IPoolable bullet = _bulletPool.Take();
 
-        bullet.SetData(_bulletDamage, _bulletSpeed, _bulletDestroyDelay, this);
+        if (bullet == null) return;
+
+        // 2. Transform.position, rotation 설정
+        bullet.tr.position = _muzzlePoint.position;
+        bullet.tr.rotation = _muzzlePoint.rotation;
+
+        // 3. 활성화
+        bullet.tr.gameObject.SetActive(true);
+
+        // Getcomponent보다 casting을 사용하자 (연산 자체가 더 적다)
+        (bullet as BulletController).SetData(_bulletDamage, _bulletSpeed, _returnDelay, this);
     }
 
     private void Rotate()
@@ -126,7 +134,7 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void Die()
     {
-        DisconnectGameManager();
+        DisconnectGameStateManager();
         Destroy(gameObject);
     }
 
@@ -138,21 +146,21 @@ public class TurretController : MonoBehaviour, IDamageable
     private void Init()
     {
         Health = MaxHealth;
-        ConnectGameManager();
+        ConnectGameStateManager();
     }
 
-    public void ConnectGameManager()
+    public void ConnectGameStateManager()
     {
-        _gameManager.AddDamageable(this);
+        GameStateManager.Instance.AddDamageable(this);
     }
 
-    public void DisconnectGameManager()
+    public void DisconnectGameStateManager()
     {
-        _gameManager.RemoveDamageable(this);
+        GameStateManager.Instance.RemoveDamageable(this);
     }
 
     private void NotifyDeath(IDamageable attacker)
     {
-        _gameManager.NotifyDeath(attacker, this);
+        GameStateManager.Instance.NotifyDeath(attacker, this);
     }
 }

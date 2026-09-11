@@ -386,6 +386,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <MaxHealth>k__BackingField: 50
   <Health>k__BackingField: 50
+  _bulletPool: {fileID: 579963088768091734, guid: 0ea35970a83aee94c8c86692c343dae5, type: 3}
+  _gameManager: {fileID: 0}
   _playerLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -409,6 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f6f88830d6ff6340884daadd35bea8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _canvas: {fileID: 0}
   _healthImage: {fileID: 5284074779215317576}
 --- !u!1 &6067921999233665800
 GameObject:

@@ -86,7 +86,7 @@ public class Monster : MonoBehaviour, IDamageable
 
     private void Die()
     {
-        DisconnectGameManager();
+        DisconnectGameStateManager();
         Destroy(gameObject);
     }
 
@@ -98,21 +98,21 @@ public class Monster : MonoBehaviour, IDamageable
     private void Init()
     {
         Health = MaxHealth;
-        ConnectGameManager();
+        ConnectGameStateManager();
     }
 
-    public void ConnectGameManager()
+    public void ConnectGameStateManager()
     {
-        _gameManager.AddDamageable(this);
+        GameStateManager.Instance.AddDamageable(this);
     }
 
-    public void DisconnectGameManager()
+    public void DisconnectGameStateManager()
     {
-        _gameManager.RemoveDamageable(this);
+        GameStateManager.Instance.RemoveDamageable(this);
     }
 
     private void NotifyDeath(IDamageable attacker)
     {
-        _gameManager.NotifyDeath(attacker, this);
+        GameStateManager.Instance.NotifyDeath(attacker, this);
     }
 }

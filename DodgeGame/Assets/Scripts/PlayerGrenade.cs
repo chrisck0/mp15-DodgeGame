@@ -74,6 +74,6 @@ public class PlayerGrenade : MonoBehaviour
             playerTransform.forward.z * chargePower * _chargePowerScale);
 
         _currentGrenadeNumber--;
-        Debug.Log($"PlayerGrenade : 힘 {chargePower}만큼 수류탄 투척, 수류탄 {_currentGrenadeNumber}개 남음");
+        // Debug.Log($"PlayerGrenade : 힘 {chargePower}만큼 수류탄 투척, 수류탄 {_currentGrenadeNumber}개 남음");
     }
 }

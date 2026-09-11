@@ -13,20 +13,16 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 
     public int MaxHealth { get => _stat.Health; }
     public int Health { get => _stat.Health; }
-    private PlayerGrenade _grenade;
     private PlayerWeapon _weapon;
     private PlayerMovement _movement;
     private PlayerStat _stat;
     public PlayerStat Stat => _stat;
     private Transform _cameraTransform;
-    private StimPack _stimPack;
-    private float _elapsedBuffTime;
     private IInteractable _targetInteractable;
 
     private bool _hasDetectInteractable => _targetInteractable != null;
     private bool _isPressedInteractionKey => Input.GetKeyDown(_interactionKey);
     private bool _canInteraction => _hasDetectInteractable && _isPressedInteractionKey;
-    private bool _hasStimPack => _stimPack != null;
 
     public GameObject GameObject { get => gameObject; }
     
@@ -38,12 +34,13 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 
     private void Update()
     {
+        if (!GameManager.Instance.IsGameRunning) return;
+
         _movement.Rotate();
         _weapon.Reload();
         _weapon.Fire();
         DetectInteractable();
         TryInteract();
-        ChangeStat();
     }
 
     private void LateUpdate()
@@ -56,7 +53,6 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     {
         _movement = GetComponent<PlayerMovement>();
         _weapon = GetComponentInChildren<PlayerWeapon>();
-        _grenade = GetComponentInChildren<PlayerGrenade>();
         _stat = GetComponent<PlayerStat>();
         _cameraTransform = Camera.main.transform;
     }
@@ -115,36 +111,13 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _targetInteractable = null;
     }
 
-    public void SetStimPack()
-    {
-        _stimPack = gameObject.AddComponent<StimPack>();
-        //TakeDamage(_stimPack.GetHealthDecrease());
-        //_movement.AddSpeed(_stimPack.GetMoveSpeedIncrease());
-        //_weapon.DecreaseCooldown(_stimPack.GetCooldownDecrease());
-    }
-
-    private void ChangeStat()
-    {
-        if (!_hasStimPack) return;
-
-        _elapsedBuffTime += Time.deltaTime;
-/*
-        if (_elapsedBuffTime > _stimPack.GetBuffTime())
-        {
-            _movement.AddSpeed(-_stimPack.GetMoveSpeedIncrease());
-            _weapon.DecreaseCooldown(-_stimPack.GetCooldownDecrease());
-            Destroy(_stimPack);
-            _stimPack = null;
-        }*/
-    }
-
     public void TakeDamage(int damage, IDamageable attacker)
     {
         _stat.Health -= damage;
 
         if (_stat.Health <= 0)
         {
-            DisconnectGameManager();
+            DisconnectGameStateManager();
             NotifyDeath(attacker);
         }
     }
@@ -159,23 +132,23 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         GameObject.GetComponent<Rigidbody>()?.AddForce(force, ForceMode.Impulse);
     }
 
-    public void ConnectGameManager()
+    public void ConnectGameStateManager()
     {
-        _gameManager.AddDamageable(this);
+        GameStateManager.Instance.AddDamageable(this);
     }
 
-    public void DisconnectGameManager()
+    public void DisconnectGameStateManager()
     {
-        _gameManager.RemoveDamageable(this);
+        GameStateManager.Instance.RemoveDamageable(this);
     }
 
     private void Init()
     {
-        ConnectGameManager();
+        ConnectGameStateManager();
     }
 
     private void NotifyDeath(IDamageable attacker)
     {
-        _gameManager.NotifyDeath(attacker, this);
+        GameStateManager.Instance.NotifyDeath(attacker, this);
     }
 }

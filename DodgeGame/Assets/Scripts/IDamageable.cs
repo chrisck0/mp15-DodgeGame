@@ -8,6 +8,6 @@ public interface IDamageable
     public int MaxHealth { get; }
     public void TakeDamage(int damage, IDamageable attacker);
     public void Knockback(Vector3 direction);
-    public void ConnectGameManager();
-    public void DisconnectGameManager();
+    public void ConnectGameStateManager();
+    public void DisconnectGameStateManager();
 }
