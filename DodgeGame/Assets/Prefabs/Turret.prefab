@@ -393,12 +393,13 @@ MonoBehaviour:
     m_Bits: 64
   _rotateSpeed: 70
   _cooldown: 1
+  _rayShot: 0.1
   _headTransform: {fileID: 7833036432655650296}
   _muzzlePoint: {fileID: 7559189626397327208}
   _bulletPrefab: {fileID: 7803454643993265617, guid: bb6d73e97fd9ed0458174443b6ce9449, type: 3}
   _bulletDamage: 10
   _bulletSpeed: 4
-  _bulletDestroyDelay: 5
+  _returnDelay: 0
 --- !u!114 &8635325041033670731
 MonoBehaviour:
   m_ObjectHideFlags: 0

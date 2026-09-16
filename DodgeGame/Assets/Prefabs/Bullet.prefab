@@ -152,4 +152,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerLayerMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 1088
+  _returnDelay: 3

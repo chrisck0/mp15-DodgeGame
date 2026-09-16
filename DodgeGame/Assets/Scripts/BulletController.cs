@@ -5,14 +5,19 @@ using UnityEngine;
 public class BulletController : MonoBehaviour, IPoolable
 {
     [SerializeField] private LayerMask _playerLayerMask;
+    [SerializeField] private float _returnDelay;
+
     private TurretController _owner;
     private int _damage;
     private float _speed;
-    private float _returnDelay;
-    private float _elapsedTime;
+    private WaitForSeconds _wait;
 
     public ObjectPool Pool { get; set; }
     public Transform tr { get => transform; }
+
+    // ------------------------
+    private void Awake() => CacheComponents();
+    private void OnEnable() => StartCoroutine(ReturnToPoolRoutine());
 
     // 어딘가에 부딪히면
     private void OnTriggerEnter(Collider other)
@@ -25,15 +30,15 @@ public class BulletController : MonoBehaviour, IPoolable
             }
         }
 
-        _elapsedTime = 0;
         Pool.Return(this);
     }
 
-    private void Update()
+    private void Update() => MoveForward();
+    // ------------------------
+
+    private void CacheComponents()
     {
-        UpdateElapsedTime();
-        MoveForward();
-        ReturnToPool();
+        _wait = new WaitForSeconds(_returnDelay);
     }
 
     // 앞으로 전진
@@ -43,25 +48,16 @@ public class BulletController : MonoBehaviour, IPoolable
     }
 
     // 터렛으로부터 데이터 전달 받기
-    public void SetData(int damage, float speed, float returnDelay, TurretController owner)
+    public void SetData(int damage, float speed, TurretController owner)
     {
         _damage = damage;
         _speed = speed;
-        _returnDelay = returnDelay;
         _owner = owner;
     }
 
-    private void UpdateElapsedTime()
+    public IEnumerator ReturnToPoolRoutine()
     {
-        _elapsedTime += Time.deltaTime;
-    }
-
-    public void ReturnToPool()
-    {
-        if (_elapsedTime >= _returnDelay)
-        {
-            _elapsedTime = 0;
-            Pool.Return(this);
-        }
+        yield return _wait;
+        Pool.Return(this);
     }
 }

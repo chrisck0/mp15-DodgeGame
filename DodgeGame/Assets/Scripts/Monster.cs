@@ -7,43 +7,53 @@ public class Monster : MonoBehaviour, IDamageable
     [SerializeField] private GameManager _gameManager;
     [SerializeField] private int _attackDamage;
     [SerializeField] private float _cooldown;
+    [SerializeField] private float _rayShot;
     [SerializeField] private LayerMask _playerLayerMask;
     [field: SerializeField] public int MaxHealth { get; private set; }
     [field: SerializeField] public int Health { get; private set; }
 
+    private WaitForSeconds _waitRayShot;
+    private WaitForSeconds _waitCooldown;
+    private WaitUntil _waitUntilPlayerInTrigger;
+    private WaitUntil _waitUntilPlayerInRange;
     private DetectionTrigger _detectionTrigger;
     private Transform _playerTransform => _detectionTrigger.TargetTransform;
-    private float _currentCooldown;
     private bool _isPlayerInTrigger => _playerTransform != null;
     private bool _isPlayerInSight;
-    private bool _isReadyToAttack => _currentCooldown >= _cooldown;
     public GameObject GameObject { get => gameObject; }
 
     private void Awake() => CacheComponents();
-    private void Start() => Init();
-
-    private void Update()
+    private void Start()
     {
-        UpdateCurrentCooldown();
-        RayShotToTarget();
-        Attack();
+        Init();
+        StartCoroutine(AttackRoutine());
+        StartCoroutine(RayShotToTargetRoutine());
     }
 
     private void CacheComponents()
     {
         _detectionTrigger = GetComponentInChildren<DetectionTrigger>();
+
+        _waitRayShot = new WaitForSeconds(_rayShot);
+        _waitCooldown = new WaitForSeconds(_cooldown);
+        _waitUntilPlayerInTrigger = new WaitUntil(() => _isPlayerInTrigger);
+        _waitUntilPlayerInRange = new WaitUntil(() => _isPlayerInSight && _isPlayerInTrigger);
     }
 
-    private void UpdateCurrentCooldown()
+    private IEnumerator RayShotToTargetRoutine()
     {
-        if (_isReadyToAttack) return;
+        while (true)
+        {
+            _isPlayerInSight = false;
 
-        _currentCooldown += Time.deltaTime;
+            yield return _waitUntilPlayerInTrigger;
+            RayShotToTarget();
+            yield return _waitRayShot;
+        }
     }
 
     private void RayShotToTarget()
     {
-        _isPlayerInSight = false;
         if (!_isPlayerInTrigger) return;
 
         Vector3 from = transform.position;
@@ -62,16 +72,21 @@ public class Monster : MonoBehaviour, IDamageable
         }
     }
 
-    private void Attack()
+    private IEnumerator AttackRoutine()
     {
-        if (!_isPlayerInSight || !_isPlayerInTrigger || !_isReadyToAttack) return;
-
-        IDamageable damageable = _playerTransform.GetComponent<IDamageable>();
-        damageable?.TakeDamage(_attackDamage, this);
-
-        _currentCooldown = 0;
+        while (true)
+        {
+            yield return _waitUntilPlayerInRange;
+            Attack();
+            yield return _waitCooldown;
+        }
     }
 
+    private void Attack()
+    {
+        IDamageable damageable = _playerTransform.GetComponent<IDamageable>();
+        damageable?.TakeDamage(_attackDamage, this);
+    }
 
     public void TakeDamage(int damage, IDamageable attacker)
     {

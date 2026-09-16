@@ -19,6 +19,7 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     public PlayerStat Stat => _stat;
     private Transform _cameraTransform;
     private IInteractable _targetInteractable;
+    private WaitForSeconds _waitDetectInteractable;
 
     private bool _hasDetectInteractable => _targetInteractable != null;
     private bool _isPressedInteractionKey => Input.GetKeyDown(_interactionKey);
@@ -28,7 +29,13 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
     
     // ----------------------------------------------
     private void Awake() => CacheComponents();
-    private void Start() => Init();
+
+    private void Start()
+    {
+        Init();
+        StartCoroutine(DetectInteractableRoutine());
+    }
+
     private void FixedUpdate() => _movement.Move();
     // ----------------------------------------------
 
@@ -38,8 +45,6 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
 
         _movement.Rotate();
         _weapon.Reload();
-        _weapon.Fire();
-        DetectInteractable();
         TryInteract();
     }
 
@@ -54,7 +59,9 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
         _movement = GetComponent<PlayerMovement>();
         _weapon = GetComponentInChildren<PlayerWeapon>();
         _stat = GetComponent<PlayerStat>();
+
         _cameraTransform = Camera.main.transform;
+        _waitDetectInteractable = new WaitForSeconds(0.1f);
     }
 
     private void SetWeaponTransform()
@@ -71,6 +78,15 @@ public class PlayerController : MonoBehaviour, IInteractor, IDamageable
             _cameraPivot.position,
             _cameraPivot.rotation
             );
+    }
+
+    public IEnumerator DetectInteractableRoutine()
+    {
+        while (true)
+        {
+            DetectInteractable();
+            yield return _waitDetectInteractable;
+        }
     }
 
     public void DetectInteractable()

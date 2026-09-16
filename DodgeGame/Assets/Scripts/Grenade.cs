@@ -12,17 +12,12 @@ public class Grenade : MonoBehaviour
     [SerializeField] private float _explosionRange;
     [SerializeField] private int _explosionDamage;
     [SerializeField] private float _knockbackForce;
-    private float _elapsedTime;
+
     private PlayerController _owner;
 
     // --------------------------------------------------
     private void Start() => Init();
-    private void OnEnable() => ResetElapsedTime();
-    private void Update()
-    {
-        UpdateElapsedTime();
-        Explode();
-    }
+    private void OnEnable() => StartCoroutine(ExplodeRoutine());
 
     private void OnDrawGizmos()
     {
@@ -31,24 +26,9 @@ public class Grenade : MonoBehaviour
     }
     // --------------------------------------------------
 
-    public void Play()
+    private IEnumerator ExplodeRoutine()
     {
-        ResetElapsedTime();
-    }
-
-    private void ResetElapsedTime()
-    {
-        _elapsedTime = 0;
-    }
-
-    private void UpdateElapsedTime()
-    {
-        _elapsedTime += Time.deltaTime;
-    }
-
-    private void Explode()
-    {
-        if (_elapsedTime < _destroyDelay) return;
+        yield return new WaitForSeconds(_destroyDelay);
 
         _grenadeBody.SetActive(false);
         _grenadeExplosionEffect.SetActive(true);

@@ -6,12 +6,13 @@ public class TurretController : MonoBehaviour, IDamageable
 {
     [field: SerializeField] public int MaxHealth { get; private set; }
     [field: SerializeField] public int Health { get; private set; }
-    
+
     [SerializeField] private ObjectPool _bulletPool;
     [SerializeField] private GameManager _gameManager;
     [SerializeField] private LayerMask _playerLayerMask;
     [SerializeField] private float _rotateSpeed;
     [SerializeField] private float _cooldown;
+    [SerializeField] private float _rayShot;
     [SerializeField] private Transform _headTransform;
     [SerializeField] private Transform _muzzlePoint;
 
@@ -19,33 +20,41 @@ public class TurretController : MonoBehaviour, IDamageable
     [SerializeField] private BulletController _bulletPrefab;
     [SerializeField] private int _bulletDamage;
     [SerializeField] private float _bulletSpeed;
-    [SerializeField] private float _returnDelay;
 
-    private float _currentCooldown;
+    private WaitForSeconds _waitRayShot;
+    private WaitForSeconds _waitCooldown;
+    private WaitUntil _waitUntilPlayerInTrigger;
+    private WaitUntil _waitUntilPlayerInRange;
     private Transform _playerTransform => _detectionTrigger.TargetTransform;
+    private DetectionTrigger _detectionTrigger;
     private bool _isPlayerInTrigger => _playerTransform != null;
     private bool _isPlayerInSight = false;
-    private bool _isReadyToFire => _currentCooldown >= _cooldown;
-    private DetectionTrigger _detectionTrigger;
+    private bool _hasFired = false;
     public GameObject GameObject { get => gameObject; }
 
     private void Awake() => CacheComponents();
-    private void Start() => Init();
+    private void Start()
+    {
+        Init();
+        StartCoroutine(RayShotToPlayerRoutine());
+        StartCoroutine(FireRoutine());
+    }
 
     private void Update()
     {
-        UpdateCurrentCooldown();
-        RayShotToPlayer();
         Rotate();
-        Fire();
     }
 
     private void CacheComponents()
     {
         _detectionTrigger = GetComponentInChildren<DetectionTrigger>();
+        _waitRayShot = new WaitForSeconds(_rayShot);
+        _waitCooldown = new WaitForSeconds(_cooldown);
+        _waitUntilPlayerInTrigger = new WaitUntil(() => _isPlayerInTrigger);
+        _waitUntilPlayerInRange = new WaitUntil(() => _isPlayerInSight && _isPlayerInTrigger);
     }
 
-    private void Fire()
+    private void LookAt()
     {
         if (!_isPlayerInSight || !_isPlayerInTrigger) return;
 
@@ -56,19 +65,36 @@ public class TurretController : MonoBehaviour, IDamageable
             );
 
         _headTransform.LookAt(look);
-
-        if (!_isReadyToFire) return;
-
-        SpawnBullet();
-
-        _currentCooldown = 0;
     }
 
-    private void UpdateCurrentCooldown()
+    private IEnumerator RayShotToPlayerRoutine()
     {
-        if (_isReadyToFire) return;
+        while (true)
+        {
+            _isPlayerInSight = false;
 
-        _currentCooldown += Time.deltaTime;
+            yield return _waitUntilPlayerInTrigger;
+            RayShotToPlayer();
+            yield return _waitRayShot;
+        }
+    }
+
+    private IEnumerator FireRoutine()
+    {
+        while (true)
+        {
+            yield return _waitUntilPlayerInRange;
+            LookAt();
+            if (_hasFired == false) StartCoroutine(SpawnBulletRoutine());
+        }
+    }
+
+    private IEnumerator SpawnBulletRoutine()
+    {
+        SpawnBullet();
+        _hasFired = true;
+        yield return _waitCooldown;
+        _hasFired = false;
     }
 
     private void SpawnBullet()
@@ -82,11 +108,11 @@ public class TurretController : MonoBehaviour, IDamageable
         bullet.tr.position = _muzzlePoint.position;
         bullet.tr.rotation = _muzzlePoint.rotation;
 
+        // Getcomponent보다 casting을 사용하자 (연산 자체가 더 적다)
+        (bullet as BulletController).SetData(_bulletDamage, _bulletSpeed, this);
+
         // 3. 활성화
         bullet.tr.gameObject.SetActive(true);
-
-        // Getcomponent보다 casting을 사용하자 (연산 자체가 더 적다)
-        (bullet as BulletController).SetData(_bulletDamage, _bulletSpeed, _returnDelay, this);
     }
 
     private void Rotate()
@@ -98,7 +124,6 @@ public class TurretController : MonoBehaviour, IDamageable
 
     private void RayShotToPlayer()
     {
-        _isPlayerInSight = false;
         if (!_isPlayerInTrigger) return;
 
         Vector3 from = new Vector3(

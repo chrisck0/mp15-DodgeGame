@@ -31,8 +31,7 @@ public class ItemBox : MonoBehaviour, IInteractable
             .SetPlayerController(player)
             .SetMoveSpeed(10f)
             .SetCooldown(0.1f)
-            .SetDamage(20)
-            .Activate();
+            .SetDamage(20);
 
         Destroy(gameObject);
     }

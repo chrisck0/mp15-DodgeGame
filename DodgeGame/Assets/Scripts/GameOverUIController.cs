@@ -1,55 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class GameOverUIController : MonoBehaviour
 {
-    [SerializeField] private Button _mainMenuButton;
-    [SerializeField] private GameObject _gameOverUI;
-    [SerializeField] private TextMeshProUGUI _gameOverText;
+    [SerializeField] GameOverUI _gameOverUI;
 
+    private bool _isGameStateManagerEventsBinded;
 
-    private void Start() => Init();
-    private void Update() => GameOver();
-    private void OnEnable() => BindButtonEvents();
-    private void OnDisable() => UnbindButtonEvents();
-
-    private void Init()
+    private void Start()
     {
-        _gameOverUI.SetActive(false);
-    }
-
-    private void BindButtonEvents()
-    {
-        _mainMenuButton.onClick.AddListener(LoadGameScene);
-    }
-
-    private void UnbindButtonEvents()
-    {
-        _mainMenuButton.onClick.RemoveListener(LoadGameScene);
-    }
-
-    public void LoadGameScene()
-    {
-        SceneManager.LoadScene(0);
-    }
-
-    private void GameOver()
-    {
-        if (!GameStateManager.Instance.IsGameOver) return;
-
-        if (GameStateManager.Instance.WinGame)
+        if (!_isGameStateManagerEventsBinded)
         {
-            _gameOverText.text = "Victory!";
-        }
-        else
-        {
-            _gameOverText.text = "Game Over";
+            BindGameStateManagerEvents();
         }
 
-        _gameOverUI.SetActive(true);
+        _gameOverUI.gameObject.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        if (GameStateManager.Instance == null) return;
+
+        BindGameStateManagerEvents();
+    }
+
+    private void OnDisable() => UnbindSingletonEvents();
+    
+    private void BindGameStateManagerEvents()
+    {
+        GameStateManager.Instance.OnGameOver += GameStateManager_OnGameOver;
+        _isGameStateManagerEventsBinded = true;
+    }
+
+    private void UnbindSingletonEvents()
+    {
+        GameStateManager.Instance.OnGameOver -= GameStateManager_OnGameOver;
+        _isGameStateManagerEventsBinded = false;
+    }
+
+    private void GameStateManager_OnGameOver()
+    {
+        _gameOverUI.GameOver();
+        _gameOverUI.gameObject.SetActive(true);
     }
 }

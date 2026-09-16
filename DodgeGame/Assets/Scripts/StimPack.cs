@@ -10,22 +10,19 @@ public class StimPack : MonoBehaviour
 
     private float _originalMoveSpeed;
     private float _originalCooldown;
-     
+
     private float _buffTime = 20f;
-    private float _elapsedTime;
-    private bool _isBuffFinished => _elapsedTime >= _buffTime;
     private PlayerController _playerController;
 
-    private void Awake()
-    {
-        _elapsedTime = 0f;
-    }
+    private void Start() => StartCoroutine(StimPackRoutine());
 
-    private void Update()
+    private IEnumerator StimPackRoutine()
     {
-        UpdateElapsedTime();
+        Activate();
+        yield return new WaitForSeconds(_buffTime);
         Deactivate();
     }
+
     public StimPack SetMoveSpeed(float moveSpeed)
     {
         _moveSpeed = moveSpeed;
@@ -50,7 +47,7 @@ public class StimPack : MonoBehaviour
         return this;
     }
 
-    public void Activate()
+    private void Activate()
     {
         _originalMoveSpeed = _playerController.Stat.MoveSpeed;
         _originalCooldown = _playerController.Stat.WeaponCooldown;
@@ -62,15 +59,8 @@ public class StimPack : MonoBehaviour
 
     private void Deactivate()
     {
-        if (!_isBuffFinished) return;
-
         _playerController.Stat.MoveSpeed = _originalMoveSpeed;
         _playerController.Stat.WeaponCooldown = _originalCooldown;
         Destroy(gameObject);
-    }
-
-    private void UpdateElapsedTime()
-    {
-        _elapsedTime += Time.deltaTime;
     }
 }

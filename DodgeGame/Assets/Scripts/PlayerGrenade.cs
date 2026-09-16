@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using System;
 
 public class PlayerGrenade : MonoBehaviour
 {
@@ -12,8 +13,17 @@ public class PlayerGrenade : MonoBehaviour
     [SerializeField] private Transform playerTransform;
     [SerializeField] private int _maxGrenadeNumber;
 
-    public int MaxGrenadeNumber => _maxGrenadeNumber;
-    public int CurrentGrenadeNumber => _currentGrenadeNumber;
+    public event Action<int, int> OnCurrentGrenadeNumberChanged;
+
+    public int CurrentGrenadeNumber
+    {
+        get => _currentGrenadeNumber;
+        set
+        {
+            _currentGrenadeNumber = value;
+            OnCurrentGrenadeNumberChanged?.Invoke(_currentGrenadeNumber, _maxGrenadeNumber);
+        }
+    }
 
     private PlayerController _controller;
     private float _chargePower;
@@ -62,7 +72,7 @@ public class PlayerGrenade : MonoBehaviour
 
     private void ThrowGrenade(float chargePower)
     {
-        if (_currentGrenadeNumber <= 0) return;
+        if (CurrentGrenadeNumber <= 0) return;
 
         Grenade grenade = Instantiate(_grenadePrefab, transform.position, transform.rotation);
         grenade.SetOwner(_controller);
@@ -73,7 +83,7 @@ public class PlayerGrenade : MonoBehaviour
             transform.forward.y * chargePower * _chargePowerScale,
             playerTransform.forward.z * chargePower * _chargePowerScale);
 
-        _currentGrenadeNumber--;
-        // Debug.Log($"PlayerGrenade : 힘 {chargePower}만큼 수류탄 투척, 수류탄 {_currentGrenadeNumber}개 남음");
+        CurrentGrenadeNumber--;
+        // Debug.Log($"PlayerGrenade : 힘 {chargePower}만큼 수류탄 투척, 수류탄 {CurrentGrenadeNumber}개 남음");
     }
 }

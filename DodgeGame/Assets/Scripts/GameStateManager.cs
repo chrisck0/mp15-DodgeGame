@@ -1,26 +1,31 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 public class GameStateManager : MonoBehaviour
 {
     public static GameStateManager Instance;
 
-    [SerializeField] private float _totalGameTime;
-    [SerializeField] private GameUIController _killlogUIController;
+    public event Action<IDamageable, IDamageable> OnDamageableChanged;
+    public event Action OnGameOver;
 
-    public float GameTimer { get; private set; }
+    public GameTimer GameTimer { get; private set; }
     public bool IsGameOver { get; private set; }
     public bool WinGame { get; private set; }
 
     private List<IDamageable> _damageables = new List<IDamageable>();
     private PlayerController _player;
-    
 
-    private void Awake() => SetSingleton();
-    private void Start() => Init();
+    // --------------
+    private void Awake()
+    {
+        SetSingleton();
+        CacheComponents();
+    }
+
     private void Update() => UpdateElapsedGameTime();
+    // --------------
 
     private void SetSingleton()
     {
@@ -35,9 +40,9 @@ public class GameStateManager : MonoBehaviour
         }
     }
 
-    private void Init()
+    private void CacheComponents()
     {
-        GameTimer = _totalGameTime;
+        GameTimer = GetComponent<GameTimer>();
     }
 
     public void AddDamageable(IDamageable damageable)
@@ -70,25 +75,24 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
-        _killlogUIController.DisplayKillLog(attacker, dead);
+        OnDamageableChanged?.Invoke(attacker, dead);
     }
 
     private void UpdateElapsedGameTime()
     {
         if (!GameManager.Instance.IsGameRunning) return;
 
-        if (GameTimer <= 0)
+        if (GameTimer.Time <= 0)
         {
             WinGame = false;
             GameOver();
             return;
         }
-        GameTimer -= Time.deltaTime;
     }
 
     private void GameOver()
     {
-        IsGameOver = true;
+        OnGameOver?.Invoke();
         GameManager.Instance.Pause();
     }
 }
