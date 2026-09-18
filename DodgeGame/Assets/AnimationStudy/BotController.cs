@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using System.Threading;
 
 public class BotController : MonoBehaviour
 {
@@ -9,29 +12,41 @@ public class BotController : MonoBehaviour
     public event Action OnDiveRoll;
 
     private float _diveRollDelay = 2.367f;
-
-    private Coroutine _routine;
-    private WaitUntil _waitUntilDiveRollInput;
-    private WaitForSeconds _waitDiveRollDelay;
+    private bool _isDiveRoll;
     private Vector2 _prevMovement;
+    private CancellationTokenSource _cancellationTokenSource;
 
-    private void Awake() => CacheComponents();
+    private void Start()
+    {
+        GetCancellationTokenSource();
+    }
 
     private void Update()
     {
         SetMove();
     }
 
-    private void SetMove()
+    private void GetCancellationTokenSource()
     {
-        if (_routine != null) return;
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        { 
-            _routine = StartCoroutine(DiveRollRoutine());
-            return;
+        if (_cancellationTokenSource != null)
+        {
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
         }
 
+        _cancellationTokenSource = new CancellationTokenSource();
+    }
+
+    private void SetMove()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            DiveRoll(_cancellationTokenSource.Token).Forget();
+        }
+
+        if (_isDiveRoll) return;
+
+        Debug.Log("SetMove");
         Vector2 movement = GetMovement();
         if (movement == _prevMovement) return;
 
@@ -39,12 +54,12 @@ public class BotController : MonoBehaviour
         _prevMovement = movement;
     }
 
-    private IEnumerator DiveRollRoutine()
+    private async UniTaskVoid DiveRoll(CancellationToken token)
     {
         OnDiveRoll?.Invoke();
-        yield return _waitDiveRollDelay;
-        _routine = null;
+        await UniTask.Delay(TimeSpan.FromSeconds(_diveRollDelay), false, PlayerLoopTiming.Update, token);
     }
+
 
     private Vector2 GetMovement()
     {
@@ -52,10 +67,5 @@ public class BotController : MonoBehaviour
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         );
-    }
-
-    private void CacheComponents()
-    {
-        _waitDiveRollDelay = new WaitForSeconds(_diveRollDelay);
     }
 }
