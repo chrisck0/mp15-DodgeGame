@@ -23,6 +23,16 @@ public class TitleSceneController : MonoBehaviour
 
     public void LoadGameScene()
     {
-        SceneManager.LoadScene(1);
+        StartCoroutine(LoadGameSceneRoutine());
+    }
+
+    private IEnumerator LoadGameSceneRoutine()
+    {
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(1);
+        if (!asyncOperation.isDone)
+        {
+            Debug.Log($"Loading GameScene... {asyncOperation.progress * 100}%");
+            yield return null;
+        }
     }
 }

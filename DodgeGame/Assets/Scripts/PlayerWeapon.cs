@@ -40,7 +40,6 @@ public class PlayerWeapon : MonoBehaviour
     private bool _isReloading;
     private bool _isPressedFire => Input.GetKey(_fireKey);
     private bool _isPressedReload => Input.GetKeyDown(_reloadKey);
-    private bool _hasFired;
     private bool _hasBullets => _currentMagazine > 0;
     private bool _canFire => _isPressedFire && _hasBullets && !_isReloading;
 
@@ -100,7 +99,6 @@ public class PlayerWeapon : MonoBehaviour
     public void Fire()
     {
         if (!_canFire) return;
-        _hasFired = true;
         CurrentMagazine--;
         PlayFlameEffect();
 
